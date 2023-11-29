@@ -59,6 +59,10 @@ let userSchema = new mongoose.Schema(
         message:{
             type:Object,
             default:{}
+        },
+        image:{
+            type:Buffer,
+            default:null
         }
     }
 )
