@@ -36,6 +36,22 @@ let userSchema = new mongoose.Schema(
             type:Number,
             required:true,
         },
+        education:{
+            type:String,
+            default:""
+        },
+        job:{
+            type:String,
+            default:""
+        },
+        fatherName:{
+            type:String,
+            default:""
+        },
+        motherName:{
+            type:String,
+            default:""
+        },
         City:{
             type:String,
             required:true,
@@ -61,7 +77,7 @@ let userSchema = new mongoose.Schema(
             default:{}
         },
         image:{
-            type:Buffer,
+            type:String,
             default:null
         }
     }

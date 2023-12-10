@@ -1,7 +1,7 @@
 import express from 'express';
 import { User } from '../Models/User.js';
 import jwt from 'jsonwebtoken'
-
+import { MailSender } from '../mailer.js';
 
 let router = express.Router();
 
@@ -19,8 +19,9 @@ const decodeJwtToken = (token)=>{
 //Favourites
 router.put('/favourites', async(req,res)=>{
     try {
+        let token=req.headers["x-auth"]
         let data= req.body.id;
-        let userId=decodeJwtToken(req.body.token)
+        let userId=decodeJwtToken(token)
 
         let user = await User.findById({_id:userId});
         //adding new favourites to existing fvaourites list
@@ -39,11 +40,34 @@ router.put('/favourites', async(req,res)=>{
     }
 })
 
+//Get User Favourites
+router.get('/get-favourites', async(req,res)=>{
+    try {
+        let token=req.headers["x-auth"]
+        let userId=decodeJwtToken(token)
+
+        let otherUsers=await User.find();
+        let user = await User.findById({_id:userId});
+        //filter Favourites Profiles
+        let favourites=otherUsers.filter((val)=>{
+            if(user.favourites.includes(val._id)){
+                return val
+            }
+        })
+        
+        res.status(200).json({message:"Favourite Profiles Got Successfully",favourites})
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message:"Internal Server Error"})
+    }
+})
+
 //Update Expectations
 router.put('/update-expectations', async(req,res)=>{
     try {
+        let token=req.headers["x-auth"]
         let data= req.body.data;
-        let userId=decodeJwtToken(req.body.token)
+        let userId=decodeJwtToken(token)
 
         let UpdateExpectations=await User.findOneAndUpdate(
             {_id:userId},
@@ -59,115 +83,12 @@ router.put('/update-expectations', async(req,res)=>{
     }
 })
 
-// Add Interested
-router.put('/add-interested', async(req,res)=>{
-    try {
-        let data= req.body.id;
-        let userId=decodeJwtToken(req.body.token)
-
-        //Function for adding interest
-        async function addInterest({sender,reciver}){
-            let user = await User.findById({_id:sender});
-            //Check if reciver is alredy exist in interested data
-            if(user.invitationSent.includes(reciver)){
-                let invitationSent=user.invitationSent.filter((val)=>val!==reciver)
-                await User.findOneAndUpdate(
-                    {_id:sender},
-                    {$set:{invitationSent:invitationSent}}
-                )
-            }
-            else{
-                let invitationGot=user.invitationGot.filter((val)=>val!==reciver)
-                await User.findOneAndUpdate(
-                    {_id:sender},
-                    {$set:{invitationGot:invitationGot}}
-                )
-            }
-            let interested=[reciver,...user.interested];
-            let addInterested=await User.findOneAndUpdate(
-                {_id:sender},
-                {$set:{interested:interested}}
-            )
-
-            if(!addInterested) return res.status(400).json({message:"Error Occured"});
-        }
-        //Update for sender side
-        addInterest({sender:userId,reciver:data});
-        addInterest({sender:userId,reciver:data});
-        
-        res.status(200).json({message:"Interested added Successfully"})
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({message:"Internal Server Error"})
-    }
-})
-
-//Remove Interested
-router.put('/remove-interested', async(req,res)=>{
-    try {
-        let data= req.body.id;
-        let userId=decodeJwtToken(req.body.token)
-
-        //Remove
-        async function removeInterest({sender,reciver}){
-            let user = await User.findById({_id:sender});
-
-            let interested=user.interested.filter((val)=>val!==reciver);
-            let addInterested=await User.findOneAndUpdate(
-                {_id:sender},
-                {$set:{interested:interested}}
-            )
-
-            if(!addInterested) return res.status(400).json({message:"Error Occured"});
-        }
-        //Remove interest for sender side
-        removeInterest({sender:userId,reciver:data});
-        //Remove interest for recipient side
-        removeInterest({sender:userId,reciver:data});
-        
-        res.status(200).json({message:"Interested removed Successfully"})
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({message:"Internal Server Error"})
-    }
-})
-
-//Invitation Sent
-router.put('/invitation-sent', async(req,res)=>{
-    try {
-        let data= req.body.id;
-        let userId=decodeJwtToken(req.body.token)
-        //Getting user data
-        let user = await User.findById({_id:userId});
-        let invitationSent=[data,...user.invitationSent];
-        // Update invitation sent for sender side
-        let addInvitationSent=await User.findOneAndUpdate(
-            {_id:userId},
-            {$set:{invitationSent:invitationSent}}
-        )
-        if(!addFavourites) return res.status(400).json({message:"Error Occured"});
-        //Getting reciver data
-        let profile = await User.findById({_id:data});
-        let invitationGot=[userId,...profile.invitationGot];
-        //Updating invitationsGot for reciver side
-        let addInvitationGot=await User.findOneAndUpdate(
-            {_id:data},
-            {$set:{invitationGot:invitationGot}}
-        )
-        if(!addInvitationGot) return res.status(400).json({message:"Error Occured"});
-        
-        res.status(200).json({message:"Invitation Sent Successfully"})
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({message:"Internal Server Error"})
-    }
-})
-
 //Add Message
 router.put('/message', async(req,res)=>{
     try {
+        let token=req.headers["x-auth"]
         let id= req.body.id;
-        let userId=decodeJwtToken(req.body.token)
+        let userId=decodeJwtToken(token)
         let data=req.body.data;
         let user = await User.findById({_id:userId});
 
@@ -176,11 +97,12 @@ router.put('/message', async(req,res)=>{
         async function updateMessage({sender,reciver}){
 
             let user = await User.findById({_id:sender});
-            let messageData=user.message
+            let messageData=user.message//{id564654:[]}
             //Check if reciver is already exist
-            if(messageData.reciver){
+            if(messageData[reciver]){
+                
                 //if yes add to existing array
-                let message=[...messageData.id,data];
+                let message=[...messageData[reciver],data];
                 messageData[reciver]=message;
             }
             else{
@@ -190,52 +112,91 @@ router.put('/message', async(req,res)=>{
             }
             //Updating message Data
             let addMessage=await User.findOneAndUpdate(
-                {_id:userId},
+                {_id:sender},
                 {$set:{message:messageData}}
             )
         }
-
         //Update message for Sender Side
         updateMessage({sender:userId,reciver:id});
          //Update message for Reciver Side
         updateMessage({sender:id,reciver:userId})
 
-        if(!addFavourites) return res.status(400).json({message:"Error Occured"});
+        //Send Mail for message Reciver
+        let mailReciever=await User.findOne({_id:id});
+        //Creating mail details
+        let mailData={
+            email:mailReciever.email,
+            subject:"New message from Mangalyam Matrimony",
+            message:`Recieved a new message from ${user.name}, Please checkout in your inbox`
+        } 
+        //Sending mail
+        let mail=await MailSender({data:mailData});
         
-        res.status(200).json({message:"Favourites added Successfully"})
+        res.status(200).json({message:"Message Sent Successfully"});
     } catch (error) {
         console.log(error);
-        res.status(500).json({message:"Internal Server Error"})
+        res.status(500).json({message:"Internal Server Error"});
     }
 })
 
 //Get Data Based on User Expectations;
 router.get('/get-profiles', async(req,res)=>{
     try {
-        let userId=decodeJwtToken(req.body.token)
+        let token=req.headers["x-auth"]
+        let userId=decodeJwtToken(token)
         let user = await User.findById({_id:userId});
         let expextations= user.expextations;
-
+        
         //Getting data based on User Expectations
-        let profiles=await User.aggregate([
-            {
-                $match:{
-                    $and:[
-                        {age:{$gte:expextations.age.min,$lte:expextations.age.max}},
-                        {City:expextations.city}
-                    ]
+        let profiles;
+        try {
+            profiles=await User.aggregate([
+                {
+                    $match:{
+                        $and:[
+                            {age:{$gte:expextations.age[0],$lte:expextations.age[1]}},
+                            {City:expextations.City},
+                            {gender: {$ne: user.gender}}
+                        ]
+                    }
                 }
-            }
-        ])
+            ])
+        } catch (error) {
+            console.log(error);
+            profiles=[];
+        }
         //Getting All Users Data
-        let otherUsers=await User.findAll();
+        let otherUsers=await User.find();
         //filtering other profiles from expectations profiles
-        let allProfiles=otherUsers.filter((val)=>!profiles.includes(val))
-
+       let allProfiles = otherUsers.filter(val => {
+        // Filter out profiles with the same gender as the user
+        if (val.gender === user.gender) {
+          return false;
+        }
+        else{
+            return val
+        }
+        })
         //declaring expectation profiles as first and other profiles comes before that
-        allProfiles=[...profiles,...allProfiles];
+        let profileData={
+            profiles,
+            allProfiles
+        };
 
-        res.status(200).json({message:"Profiles Got Successfully",allProfiles})
+        res.status(200).json({message:"Profiles Got Successfully",profileData})
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message:"Internal Server Error"})
+    }
+})
+
+//Get Particular Profile Data 
+router.get('/get-particular-profile-data', async(req,res)=>{
+    try {
+        let id=req.headers["id"]
+        let profile = await User.findById({_id:id});
+
+        res.status(200).json({message:"User Data Got Successfully",profile})
     } catch (error) {
         console.log(error);
         res.status(500).json({message:"Internal Server Error"})
