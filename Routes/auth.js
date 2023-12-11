@@ -38,7 +38,7 @@ router.post('/signup', async(req,res)=>{
             gender: req.body.gender,
             dob:req.body.dob,
             age:req.body.age,
-            City:req.body.city
+            City:req.body.City
         }).save();
 
         //generate jwtToken
