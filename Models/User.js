@@ -54,7 +54,6 @@ let userSchema = new mongoose.Schema(
         },
         City:{
             type:String,
-            required:true,
         },
         expextations:{
             type:Object,
