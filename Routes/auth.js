@@ -130,11 +130,11 @@ router.put('/update-user-data', async(req,res)=>{
     try {
         let token=req.headers["x-auth"]
         let userId=decodeJwtToken(token)
-        let data=req.body.data;
+
         //Updating User Data
-        let updatedUser = await User.findOneAndUpdate({
-            _id:userId,
-            $set:{
+        let updatedUser = await User.findOneAndUpdate(
+            {_id:userId},
+            {$set:{
                 name: req.body.name,
                 phone:req.body.phone,
                 City:req.body.city,
@@ -143,9 +143,8 @@ router.put('/update-user-data', async(req,res)=>{
                 job:req.body.job,
                 motherName:req.body.motherName,
                 fatherName:req.body.fatherName,
-            }
-        })
-
+            }}
+        )
         res.status(200).json({message:"User Data Updated Successfully"})
     } catch (error) {
         console.log(error);
