@@ -6,7 +6,7 @@ export function dbConnection(){
     //     useUnifiedTopology: true,
     // }
     try {
-        mongoose.connect("mongodb://127.0.0.1:27017/mangalyam");
+        mongoose.connect("mongodb+srv://rajesh:rajesh145@cluster0.563jw0h.mongodb.net/Mangalyam_Matrimony?retryWrites=true&w=majority");
         console.log("Database Connected Successfully");
     } catch (error) {
         console.log("Error Connecting in DB", error)
