@@ -1,6 +1,7 @@
 import express from "express";
 import { User } from "../Models/User.js";
 import jwt from "jsonwebtoken";
+import { MailSender } from "../mailer.js";
 
 let router = express.Router();
 
