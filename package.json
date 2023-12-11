@@ -10,7 +10,7 @@
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.7",
     "nodemon": "^3.0.1",
-    "vercel": "^32.5.6"
+    "vercel": "^32.6.1"
   },
   "name": "magalyam_backend_app",
   "version": "1.0.0",
