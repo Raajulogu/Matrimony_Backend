@@ -58,7 +58,7 @@ router.put("/sent", async (req, res) => {
     let userId = decodeJwtToken(token);
     //Getting user data
     let user = await User.findById({ _id: userId });
-    if (user.interested.includes(data)) {
+    if (user.interested.includes(data) || user.invitationGot.includes(data)) {
       return res
         .status(400)
         .json({ message: "Profile Already in Interested List" });
